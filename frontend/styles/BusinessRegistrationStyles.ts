@@ -1,0 +1,126 @@
+import { StyleSheet } from "react-native";
+
+export default StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#f9f9f9",
+  },
+  scrollContainer: {
+    padding: 20,
+  },
+  imagePicker: {
+    alignItems: "center",
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    padding: 1,
+    borderRadius: 10,
+    backgroundColor: "#FFF8F5",
+  },
+  imageWrapper: {
+    width: "100%",
+    height: 200,
+    borderRadius: 10,
+    overflow: "hidden",
+    position: "relative",
+  },
+  selectedImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  uploadText: {
+    color: "#C67C4E",
+    fontSize: 16,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  formContainer: {
+    marginTop: 10,
+  },
+  inputGroup: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#C67C4E",
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  textArea: {
+    minHeight: 100,
+    textAlignVertical: "top",
+  },
+  policyContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+    flexWrap: "wrap",
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: "#aaa",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
+  },
+  checkboxChecked: {
+    backgroundColor: "#C67C4E",
+    borderColor: "#C67C4E",
+  },
+  checkmark: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  policyText: {
+    flex: 1,
+    fontSize: 14,
+    color: "#666",
+  },
+  policyLink: {
+    color: "#C67C4E",
+    fontWeight: "600",
+  },
+  submitButton: {
+    alignSelf: "center",
+    backgroundColor: "#C67C4E",
+  },
+  deleteButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+});

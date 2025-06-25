@@ -1,0 +1,60 @@
+name: Deploy to BrewBuzz Server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up SSH key for EC2
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan ${{ secrets.EC2_PUBLIC_IP }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to EC2
+        run: |
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_PUBLIC_IP }} "
+            eval \"\$(ssh-agent -s)\"
+            ssh-add ~/.ssh/id_rsa
+
+            # Update packages
+            sudo yum update -y
+            sudo yum install -y gcc-c++ make git
+
+            # Force install Node.js
+            curl -sL https://rpm.nodesource.com/setup_20.x | sudo bash -
+            sudo yum install -y nodejs
+
+            # Ensure PM2 is installed
+            sudo npm install -g pm2
+
+            # Repository setup
+            if [ ! -d /home/ec2-user/BrewBuzzBackend ]; then
+              git clone git@github.com:24techdesign/BrewBuzzBackend.git /home/ec2-user/BrewBuzzBackend
+            fi
+
+            cd /home/ec2-user/BrewBuzzBackend
+
+            # Reset and pull latest changes
+            git reset --hard
+            git clean -fd
+            git pull origin main
+
+            # Install dependencies
+            npm install
+
+            # Restart PM2
+            pm2 stop brewbuzz-backend || true
+            pm2 delete brewbuzz-backend || true
+            pm2 start npm --name \"brewbuzz-backend\" -- run start
+            pm2 save
+            sudo env PATH=\$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u ec2-user --hp /home/ec2-user
+          "

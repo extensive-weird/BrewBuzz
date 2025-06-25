@@ -1,0 +1,72 @@
+name: EAS Update and Notify
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Set up Node.js (use Node.js v22.5.1 as in your local environment)
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22.5.1'  # Use Node.js v22.5.1 as you use it locally
+
+      # Install dependencies
+      - name: Install dependencies
+        run: npm install
+
+      # Set up Expo using Expo GitHub Action
+      - name: Set up Expo
+        uses: expo/expo-github-action@v6
+        with:
+          expo-version: 'latest'  # You can provide the version if you want, otherwise it'll use the latest.
+
+      # Install eas-cli manually
+      - name: Install eas-cli
+        run: npm install -g eas-cli
+
+      # Run EAS update command and capture the Update Group ID
+      - name: Run EAS update and capture output
+        id: eas-update
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}  # Use the updated secret name
+          EXPO_PUBLIC_API_BASE_URL: ${{ secrets.EXPO_PUBLIC_API_BASE_URL }}  # Add the EXPO_PUBLIC_API_BASE_URL environment variable
+        run: |
+          # Run the EAS update
+          OUTPUT=$(eas update --platform all --channel production --message "Automatic update triggered by GitHub Actions" --non-interactive)
+          
+          # Check for the presence of the Update Group ID in the output
+          if [[ $? -ne 0 ]]; then
+            echo "EAS update failed. Please check the output above for details."
+            exit 1
+          fi
+          
+          # Extract the Update Group ID from the output
+          UPDATE_GROUP_ID=$(echo "$OUTPUT" | awk '/Update group ID/ {print $NF}')
+          
+          if [ -z "$UPDATE_GROUP_ID" ]; then
+            echo "Update Group ID not found. The output format may have changed."
+            exit 1
+          fi
+          
+          # Construct the direct Expo update preview URL using the Update Group ID
+          EAS_DASHBOARD_URL="https://expo.dev/preview/update?message=Automatic%20update%20triggered%20by%20GitHub%20Actions&updateRuntimeVersion=1.0.0&createdAt=$(date -u +%Y-%m-%dT%H:%M:%SZ)&slug=exp&projectId=8536d604-1ee6-4a04-b5cb-26c3ce9aaae2&group=${UPDATE_GROUP_ID}"
+          
+          # Output the URL for debugging
+          echo "EAS Dashboard URL: $EAS_DASHBOARD_URL"
+          
+          # Save the URL to the environment variable for later use
+          echo "EAS_DASHBOARD_URL=$EAS_DASHBOARD_URL" >> $GITHUB_ENV
+      # Send build result to Discord via Webhook (include the direct link)
+      - name: Send Discord Notification
+        run: |
+          curl -X POST -H "Content-Type: application/json" -d "{\"content\": \"Your update has been successfully published to the production channel! Check it out here: ${EAS_DASHBOARD_URL}\"}" ${{ secrets.DISCORD_WEBHOOK_URL }}

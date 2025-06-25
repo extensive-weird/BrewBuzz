@@ -1,0 +1,1078 @@
+# ------------------------------------------------------------------------------
+# Swagger UI Guide for BrewBuzz
+#
+# Swagger UI is integrated to help you test and explore the BrewBuzz API visually.
+#
+# Accessing Swagger:
+#   1. Start the backend server:
+#      $ npm run dev
+#
+#   2. Open your browser and visit:
+#      http://localhost:3001/api-docs
+#
+# How to Test APIs:
+#   - Choose an endpoint (e.g., POST /api/signup)
+#   - Click "Try it out"
+#   - Fill in the request body
+#   - Click "Execute"
+#   - View the response, status code, and headers
+#
+# Using Secure Routes (JWT Auth):
+#   - Sign in using /api/signin
+#   - Copy the returned token
+#   - Click the "Authorize 🔒" button
+#   - Paste the token in this format:
+#       Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6...
+#   - Now you can test endpoints like:
+#       • POST /api/orders
+#       • GET /api/favorites
+#       • PUT /api/business/activate/:id
+#
+# Swagger File Location:
+#   - This file is located at /docs/swagger.yaml
+#   - Edit it to update or add new endpoint documentation
+#
+# ------------------------------------------------------------------------------
+
+
+
+
+openapi: 3.0.0
+info:
+  title: BrewBuzz API
+  version: 1.0.0
+  description: BrewBuzz API endpoints testing.
+
+servers:
+  - url: http://localhost:3001
+
+#--Auth User--
+paths:
+  /api/signup:
+    post:
+      summary: Register a new user
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSignup'
+      responses:
+        "201":
+          description: User created successfully
+        "400":
+          description: Missing required fields or email already exists
+        "500":
+          description: Server error
+
+  /api/signin:
+    post:
+      summary: Log in a user and return JWT token
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: amohsin@umich.edu
+                password:
+                  type: string
+                  format: password
+                  example: Test4now!!!
+      responses:
+        "200":
+          description: Login successful
+        "401":
+          description: Invalid credentials
+        "404":
+          description: User not found
+        "500":
+          description: Server error
+
+  /api/forgot-password:
+    post:
+      summary: Send 4-digit reset PIN to user's email
+      description: Generates a 4-digit PIN, sends it to the user's email, and returns a token for password reset verification.
+      tags:
+        - Password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPassword'
+      responses:
+        "200":
+          description: PIN sent to email with token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: A 4-digit PIN has been sent to your email.
+                  token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  
+
+  /api/reset-password:
+    post:
+      summary: Reset user's password by verifying token + PIN
+      tags:
+        - Password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPassword'
+      responses:
+        "200":
+          description: Password updated successfully
+        "400":
+          description: Invalid PIN
+        "404":
+          description: User not found
+        "500":
+          description: Server error
+
+  /api/change-password:
+    post:
+      summary: Change the logged-in user's password
+      tags:
+        - Password
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePassword'
+      responses:
+        "200":
+          description: Password changed successfully
+        "400":
+          description: Validation failed or old password is incorrect
+        "404":
+          description: User not found
+        "500":
+          description: Server error
+
+  #--Business CRUD Operations--
+  /api/createbusiness:
+    post:
+      summary: Create a new business
+      description: Only accessible to authenticated users with the `Business` role.
+      tags:
+        - Business
+      security:
+        - bearerAuth: []  # Requires JWT token
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - name
+                - location
+                - phone_number
+                - clover_api_token
+                - merchant_id
+              properties:
+                name:
+                  type: string
+                category:
+                  type: string
+                description:
+                  type: string
+                location:
+                  type: string
+                phone_number:
+                  type: string
+                clover_api_token:
+                  type: string
+                merchant_id:
+                  type: string
+                cover_photo:
+                  type: string
+                  format: binary  # File upload
+      responses:
+        "201":
+          description: Business created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  business:
+                    $ref: '#/components/schemas/Business'
+        "400":
+          description: Missing required fields
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "500":
+          description: Server or S3 upload error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /api/businesses:
+    get:
+      summary: Get all businesses for the logged-in business user
+      tags:
+        - Business
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of businesses retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  businesses:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Business'
+        "500":
+          description: Server error while fetching businesses
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /api/business/{id}:
+    get:
+      summary: Get detailed info about a single business (including menu and hours)
+      tags:
+        - Business
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Business ID
+      responses:
+        "200":
+          description: Business details with menu and hours
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  location:
+                    type: string
+                  phone_number:
+                    type: string
+                  description:
+                    type: string
+                  cover_photo:
+                    type: string
+                  clover_api_token:
+                    type: string
+                  merchant_id:
+                    type: string
+                  hours:
+                    type: array
+                    items:
+                      type: object # Define structure if known
+                  menu:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MenuItem'
+        "404":
+          description: Business not found
+        "500":
+          description: Failed to fetch business or Clover data
+
+  /api/updatebusiness/{id}:
+    put:
+      summary: Update a business by ID
+      description: Only the business owner can update their business. Supports file upload.
+      tags:
+        - Business
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Business ID to update
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                location:
+                  type: string
+                phone_number:
+                  type: string
+                clover_api_token:
+                  type: string
+                merchant_id:
+                  type: string
+                cover_photo:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Business updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  business:
+                    $ref: '#/components/schemas/Business'
+        "403":
+          description: Unauthorized to update this business
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "404":
+          description: Business not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /api/deletebusiness/{id}:
+    delete:
+      summary: Soft delete a business (status set to "deleted")
+      tags:
+        - Business
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Business ID to delete
+      responses:
+        "200":
+          description: Business deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "403":
+          description: Unauthorized to delete this business
+        "404":
+          description: Business not found
+        "500":
+          description: Server error
+
+  /api/business/deactivate/{id}:
+    put:
+      summary: Deactivate a business (status set to "inactive")
+      tags:
+        - Business
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Business ID to deactivate
+      responses:
+        "200":
+          description: Business deactivated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "403":
+          description: Unauthorized
+        "404":
+          description: Business not found
+        "500":
+          description: Server error
+
+  /api/business/activate/{id}:
+    put:
+      summary: Reactivate a business (status set to "active")
+      tags:
+        - Business
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Business ID to activate
+      responses:
+        "200":
+          description: Business activated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "403":
+          description: Unauthorized
+        "404":
+          description: Business not found
+        "500":
+          description: Server error
+
+#--Customer Features--
+
+  /api/homepage:
+    get:
+      summary: Get homepage data for the logged-in user
+      description: Returns personalized data depending on user category (Customer or Business)
+      tags:
+        - Home
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Homepage data fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true  # You can replace this with exact structure if needed
+        "401":
+          description: Unauthorized (invalid or missing token)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "500":
+          description: Server error
+
+  /api/favorites/{businessId}:
+    post:
+      summary: Toggle favorite for a business (add/remove)
+      tags:
+        - Favorites
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: businessId
+          required: true
+          schema:
+            type: integer
+          description: ID of the business to toggle
+      responses:
+        "200":
+          description: Removed from favorites
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "201":
+          description: Added to favorites
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "400":
+          description: Invalid business ID
+        "404":
+          description: Business not found
+        "500":
+          description: Server error
+
+  /api/favorites:
+    get:
+      summary: Get all favorite businesses for the logged-in user
+      tags:
+        - Favorites
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of favorite businesses
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  favorites:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FavoriteBusiness'
+        "500":
+          description: Failed to fetch favorites
+
+  /api/businesses/{business_id}/menu:
+    get:
+      summary: Fetch menu for a specific business (from Clover)
+      tags:
+        - Menu
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: business_id
+          required: true
+          schema:
+            type: string
+          description: ID of the business to retrieve the menu for
+      responses:
+        "200":
+          description: Menu retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  menu:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MenuItem'
+        "404":
+          description: Business not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "500":
+          description: Failed to fetch menu
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+
+  /api/businesses/{business_id}/reviews:
+    post:
+      summary: Create or update a review for a business
+      tags:
+        - Reviews
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: business_id
+          required: true
+          schema:
+            type: string
+          description: ID of the business to review
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewRequest'
+      responses:
+        "201":
+          description: Review created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewResponse'
+        "200":
+          description: Review updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewResponse'
+        "404":
+          description: Business not found
+        "500":
+          description: Server error
+
+    get:
+      summary: Get all reviews and average rating for a business
+      tags:
+        - Reviews
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: business_id
+          required: true
+          schema:
+            type: string
+          description: ID of the business to fetch reviews for
+      responses:
+        "200":
+          description: Reviews retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  business:
+                    $ref: '#/components/schemas/Business'
+                  averageRating:
+                    type: number
+                    format: float
+                  reviews:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Review'
+        "404":
+          description: Business not found
+        "500":
+          description: Failed to fetch reviews
+
+  /api/reviews/{review_id}:
+    delete:
+      summary: Delete a review by its ID (if you are the owner)
+      tags:
+        - Reviews
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: review_id
+          required: true
+          schema:
+            type: string
+          description: ID of the review to delete
+      responses:
+        "200":
+          description: Review deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "404":
+          description: Review not found
+        "500":
+          description: Server error
+
+
+  /api/orders:
+    post:
+      summary: Place an order
+      description: Submits order to Clover and stores it in DB.
+      tags:
+        - Orders
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+      responses:
+        "200":
+          description: Order placed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  order:
+                    $ref: '#/components/schemas/Order'
+        "400":
+          description: Invalid order request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "404":
+          description: Business not found
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+
+
+
+
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    UserSignup:
+      type: object
+      required: [full_name, email, password, state, zipcode, user_category]
+      properties:
+        full_name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        state:
+          type: string
+        zipcode:
+          type: string
+        user_category:
+          type: string
+    SignIn:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          example: StrongPass123
+
+    ForgotPassword:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+
+
+    ResetPassword:
+      type: object
+      required: [token, pin, newPassword]
+      properties:
+        token:
+          type: string
+        pin:
+          type: integer
+          format: int32
+        newPassword:
+          type: string
+
+    ChangePassword:
+      type: object
+      required: [oldPassword, newPassword, confirmNewPassword]
+      properties:
+        oldPassword:
+          type: string
+        newPassword:
+          type: string
+        confirmNewPassword:
+          type: string
+    BusinessCreate:
+      type: object
+      required:
+        - name
+        - location
+        - phone_number
+        - clover_api_token
+        - merchant_id
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+        description:
+          type: string
+        location:
+          type: string
+        phone_number:
+          type: string
+        clover_api_token:
+          type: string
+        merchant_id:
+          type: string
+        cover_photo:
+          type: string
+          format: binary  # for file upload
+
+    Business:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        name:
+          type: string
+        category:
+          type: string
+        description:
+          type: string
+        location:
+          type: string
+        phone_number:
+          type: string
+        clover_api_token:
+          type: string
+        merchant_id:
+          type: string
+        cover_photo:
+          type: string
+    FavoriteBusiness:
+      type: object
+      properties:
+        id:
+          type: integer
+        cover_photo:
+          type: string
+        name:
+          type: string
+        location:
+          type: string
+        phone_number:
+          type: string
+        description:
+          type: string
+        averageRating:
+          type: number
+          format: float
+        reviewCount:
+          type: integer
+    MenuItem:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        price:
+          type: number
+          format: float
+        image:
+          type: string
+        category:
+          type: string
+        modifiers:
+          type: array
+          items:
+            type: string # This should ideally be a Modifier object if structure is known
+    ReviewRequest:
+      type: object
+      required:
+        - rating
+        - review
+      properties:
+        rating:
+          type: number
+          format: float
+          example: 4.5
+        review:
+          type: string
+          example: "Great coffee and cozy atmosphere."
+
+    Review:
+      type: object
+      properties:
+        id:
+          type: integer
+        rating:
+          type: number
+        review:
+          type: string
+        user:
+          type: object
+          properties:
+            id:
+              type: integer
+            full_name:
+              type: string
+
+    ReviewResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        review:
+          $ref: '#/components/schemas/Review'
+    Order:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        business_id:
+          type: integer
+        total_price:
+          type: number
+          format: float
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              price:
+                type: number
+              quantity:
+                type: integer
+              modifiers:
+                type: array
+                items:
+                  type: object # Define structure if known
+        # receipt_url: # Removed
+        #   type: string # Removed
+        clover_order_id:
+          type: string
+    OrderRequest:
+      type: object
+      required:
+        - business_id
+        - items
+      properties:
+        business_id:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+    OrderItem:
+      type: object
+      required:
+        - item_id
+        - quantity
+      properties:
+        item_id:
+          type: string
+          description: Clover item ID
+        name:
+          type: string
+          description: Item name (optional)
+        price:
+          type: number
+          format: float
+          description: Price per unit in dollars
+        quantity:
+          type: integer
+        modifiers:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              price:
+                type: number
+                format: float
+              modifier_group_id:
+                type: string

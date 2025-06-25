@@ -1,0 +1,161 @@
+import { StyleSheet } from "react-native";
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from "react-native-responsive-screen";
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
+  listContainer: {
+    padding: 16,
+    paddingBottom: 100,
+    flexGrow: 1,
+  },
+  headerText: {
+    fontSize: 16,
+    color: "#666",
+    marginBottom: 16,
+    fontWeight: "500",
+  },
+  businessCard: {
+    borderRadius: 16,
+    backgroundColor: "#fff",
+    marginBottom: 20,
+    overflow: "hidden",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    position: "relative",
+    height: 200,
+  },
+  businessImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
+  gradient: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: "50%",
+    borderRadius: 16,
+  },
+  businessInfo: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 16,
+  },
+  businessName: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#C67C4E",
+    marginBottom: 4,
+    textShadowColor: "rgba(0, 0, 0, 0.75)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  businessAddress: {
+    fontSize: 14,
+    color: "#f0f0f0",
+    marginBottom: 8,
+    textShadowColor: "rgba(0, 0, 0, 0.75)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  ratingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  starRatings: {
+    flexDirection: "row",
+    marginRight: 6,
+  },
+  star: {
+    color: "#FFD700",
+    fontSize: 16,
+    textShadowColor: "rgba(0, 0, 0, 0.75)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  starInactive: {
+    color: "#D3D3D3",
+    fontSize: 16,
+    textShadowColor: "rgba(0, 0, 0, 0.75)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  averageRatingText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "bold",
+    textShadowColor: "rgba(0, 0, 0, 0.75)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  favoriteButton: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    borderRadius: 20,
+    padding: 8,
+    zIndex: 10,
+  },
+  favoriteIcon: {
+    width: 24,
+    height: 24,
+    tintColor: "#C67C4E",
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 32,
+    marginTop: 100,
+  },
+  emptyIcon: {
+    width: 80,
+    height: 80,
+    tintColor: "#C67C4E",
+    opacity: 0.5,
+    marginBottom: 20,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+    lineHeight: 24,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: "#666",
+  },
+  businessList: {
+    paddingTop: 25,
+    paddingHorizontal: 20,
+  },
+});
+
+export default styles;
